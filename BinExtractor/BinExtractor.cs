@@ -5,9 +5,9 @@ namespace BinExtractor
 {
     internal class BinExtractor
     {
-        static readonly List<string> FilesEncrypted = new List<string>()
+        static readonly List<string> Unencrypted = new List<string>()
         {
-            "NORMAL", "SCENE_ID", "SCENEDAT"
+            "SOUND_ID", "VOICE_ID", "SYSTEM"
         };
 
         static readonly byte[] UniformKey = new byte[]
@@ -20,7 +20,7 @@ namespace BinExtractor
             0xDF, 0xFE, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
         };
 
-        public static unsafe byte[] Decrypt(byte[] data, int tempSize, int nSegments)
+        public static unsafe byte[] Decrypt(byte[] data, int finalSize, int nSegments)
         {
             List<byte> result = new List<byte>();
             List<byte> temp = new List<byte>();
@@ -35,9 +35,9 @@ namespace BinExtractor
             {
                 readPointer = p;
             }
-            int nSteps = tempSize / nSegments;
+            int nSteps = finalSize / nSegments;
             int loopRange = nSteps * nSegments;
-            while (temp.Count < tempSize)
+            while (temp.Count < finalSize)
             {
                 byte current = *readPointer;
                 byte key = (byte)(current >> 5);
@@ -106,17 +106,14 @@ namespace BinExtractor
                 }
                 readPointer++;
             }
-            if (nSteps > 0)
+            for (int i = 0; i < nSteps; i++)
             {
-                for (int i = 0; i < nSteps; i++)
+                for (int j = i; j < loopRange; j += nSteps)
                 {
-                    for (int j = i; j < loopRange; j += nSteps)
-                    {
-                        result.Add(temp[j]);
-                    }
+                    result.Add(temp[j]);
                 }
             }
-            for (int i = loopRange; i < tempSize; i++)
+            for (int i = loopRange; i < finalSize; i++)
             {
                 result.Add(temp[i]);
             }
@@ -126,7 +123,7 @@ namespace BinExtractor
         private static bool IsBorder(byte[] line)
         {
             foreach (byte b in line)
-                if (b != '\xFF') return false;
+                if (b != 0xFF) return false;
             return true;
         }
 
@@ -160,11 +157,11 @@ namespace BinExtractor
             while (hdReader.BaseStream.Position < hdReader.BaseStream.Length)
             {
                 int inputSize = hdReader.ReadInt32();
-                int readSize = ((inputSize + 0xF) & ~0xF);
+                int readSize = (inputSize + 0xF) & ~0xF;
                 while (readSize == 0)
                 {
                     inputSize = hdReader.ReadInt32();
-                    readSize = ((inputSize + 0xF) & ~0xF);
+                    readSize = (inputSize + 0xF) & ~0xF;
                 }
 
                 do
@@ -173,7 +170,7 @@ namespace BinExtractor
                 } while (IsBorder(line));
                 binReader.BaseStream.Position -= 0x10;
 
-                if (FilesEncrypted.Contains(Path.GetFileNameWithoutExtension(binPath)))
+                if (!Unencrypted.Contains(Path.GetFileNameWithoutExtension(binPath)))
                 {
                     int tempSize = binReader.ReadInt32();
                     int nSegments = binReader.ReadInt32();
@@ -187,7 +184,7 @@ namespace BinExtractor
                 binReader.BaseStream.Position += readSize - inputSize;
 
                 string fileName = string.Format("{0:D4}", num++) + GetExtension(result);
-                BinaryWriter writer = new BinaryWriter(File.Open(Path.Combine(outPath, fileName), FileMode.Create));
+                BinaryWriter writer = new BinaryWriter(File.Create(Path.Combine(outPath, fileName)));
                 writer.Write(result);
                 writer.Close();
             }
