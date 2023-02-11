@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BinExtractor", "BinExtractor\BinExtractor.csproj", "{702229A3-D306-4CF3-987D-7E2D4F3915AF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NutParser", "NutParser\NutParser.csproj", "{89BEEFB6-50E7-4A94-B9E2-95C1C76D574D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{702229A3-D306-4CF3-987D-7E2D4F3915AF}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{702229A3-D306-4CF3-987D-7E2D4F3915AF}.Debug|Any CPU.Build.0 = Release|Any CPU
+		{702229A3-D306-4CF3-987D-7E2D4F3915AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{702229A3-D306-4CF3-987D-7E2D4F3915AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89BEEFB6-50E7-4A94-B9E2-95C1C76D574D}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{89BEEFB6-50E7-4A94-B9E2-95C1C76D574D}.Debug|Any CPU.Build.0 = Release|Any CPU
+		{89BEEFB6-50E7-4A94-B9E2-95C1C76D574D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89BEEFB6-50E7-4A94-B9E2-95C1C76D574D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EA0FA568-1BB8-4BEF-9447-3582E315935D}
+	EndGlobalSection
+EndGlobal
