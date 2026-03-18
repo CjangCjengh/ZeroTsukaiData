@@ -7,7 +7,7 @@ namespace AudioExtractor
 {
     /// <summary>
     /// PS-ADPCM Audio Extractor for Zero no Tsukaima PS2 games.
-    /// Supports both VOICE_ID.BIN (mono 22050Hz) and SOUND_ID.BIN (stereo 44100Hz).
+    /// Supports both VOICE_ID.BIN (mono 22050Hz) and SOUND_ID.BIN (stereo, sample rate from header).
     ///
     /// VOICE_ID format:
     ///   - Continuous raw PS-ADPCM stream, mono 22050Hz 16-bit
@@ -19,7 +19,7 @@ namespace AudioExtractor
     ///   - 0xFF frames are SPU2 alignment padding (skipped during decode)
     ///
     /// SOUND_ID format:
-    ///   - 16-byte header: [reserved][~44100][mode][interleave=4096]
+    ///   - 16-byte header: [reserved][sample_rate(e.g.44050)][mode][interleave=4096]
     ///   - SOUND_ID.HD index: BGM bank sizes (universal parser for all games)
     ///   - Each bank is stereo PS-ADPCM with 4096-byte interleaving (L/R/L/R...)
     ///   - After all banks: SE region with mono PS-ADPCM, flag=1 delimited
@@ -452,7 +452,7 @@ namespace AudioExtractor
         /// Requires SOUND_ID.HD for bank size index.
         /// </summary>
         public static void ExtractSound(string binPath, string hdPath, string outPath,
-            int sampleRate = 44100)
+            int sampleRate = 0)
         {
             Directory.CreateDirectory(outPath);
 
@@ -467,6 +467,11 @@ namespace AudioExtractor
             using (var fs = File.OpenRead(binPath))
                 fs.Read(header, 0, 16);
             int interleave = (int)BitConverter.ToUInt32(header, 12);
+            int binSampleRate = (int)BitConverter.ToUInt32(header, 4); // 采样率从BIN头读取
+
+            // 确定最终采样率：参数指定 > BIN头读取
+            if (sampleRate <= 0)
+                sampleRate = binSampleRate;
 
             // Read HD index (universal parser for all game versions)
             List<uint> banks = ReadSoundHD(hdPath);

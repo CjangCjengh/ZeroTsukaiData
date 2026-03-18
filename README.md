@@ -88,7 +88,7 @@ SECTION\FILENAME.EXT
 - Voice IDs in scene scripts (`0x04000000 + N`) directly map to voice index N
 
 #### SOUND_ID (stereo BGM + mono SE)
-- Output: **44100Hz stereo** WAV for BGM banks, **44100Hz mono** WAV for SE
+- Output: **44050Hz stereo** WAV for BGM banks, **44050Hz mono** WAV for SE (sample rate read from BIN header)
 - Requires **SOUND_ID.HD** (mandatory for bank size index)
 - **Universal HD parser**: automatically handles all three games' different HD structures
 
@@ -102,7 +102,7 @@ The HD parser uses a universal approach: skip header (`vals[0]=0, vals[1]=20`), 
 | symphony | `[0][20][50 large][0][bank][0][bank]...[0×6][51 small][meta...]` | 101+ |
 
 ##### SOUND_ID.BIN format details
-- 16-byte header: `[reserved] [~44100 sample rate] [mode] [interleave=4096]`
+- 16-byte header: `[reserved] [sample_rate=44050] [mode] [interleave=4096]`
 - BIN data starts at offset 16, all banks laid out sequentially
 - Each bank uses **dual-channel PS-ADPCM** with **4096-byte interleaving** (L block / R block / L block / R block...)
 - After all banks: **SE region** containing short mono sound effects, delimited by flag=1 frames

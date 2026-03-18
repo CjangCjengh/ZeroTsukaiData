@@ -17,7 +17,7 @@ namespace AudioExtractor
                 Console.WriteLine("  AudioExtractor.exe <path_to_BIN> [sample_rate]");
                 Console.WriteLine();
                 Console.WriteLine("  VOICE_ID.BIN -> mono WAV (default 22050Hz)");
-                Console.WriteLine("  SOUND_ID.BIN -> stereo BGM + mono SE (default 44100Hz)");
+                Console.WriteLine("  SOUND_ID.BIN -> stereo BGM + mono SE (sample rate from BIN header)");
                 Console.WriteLine();
                 Console.WriteLine("Press any key to exit...");
                 Console.ReadKey();
@@ -76,9 +76,10 @@ namespace AudioExtractor
                     }
                     else if (fileName.StartsWith("SOUND"))
                     {
-                        // SOUND_ID mode: stereo 44100Hz
-                        int sampleRate = (customSampleRate > 0) ? customSampleRate : 44100;
-                        Console.WriteLine("Mode: SOUND (stereo " + sampleRate + "Hz)");
+                        // SOUND_ID mode: sample rate from BIN header (or custom override)
+                        int sampleRate = (customSampleRate > 0) ? customSampleRate : 0;
+                        Console.WriteLine("Mode: SOUND (stereo, " +
+                            (customSampleRate > 0 ? customSampleRate + "Hz override" : "sample rate from BIN header") + ")");
 
                         if (!File.Exists(hdPath))
                         {
