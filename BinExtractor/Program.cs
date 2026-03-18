@@ -25,9 +25,10 @@ namespace BinExtractor
                     BinExtractor.Extract(binPath, hdPath, Path.ChangeExtension(binPath, null));
                     Console.WriteLine("Extracted: " + binPath);
                 }
-                catch
+                catch (Exception ex)
                 {
                     Console.WriteLine("Failed: " + binPath);
+                    Console.WriteLine("  Error: " + ex.Message);
                     continue;
                 }
             }

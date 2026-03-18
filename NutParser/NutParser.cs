@@ -103,18 +103,69 @@ namespace NutParser
                     (bytes[index + 1] << 8) | bytes[index];
         }
 
+        /// <summary>
+        /// Check if the file is Squirrel source code (text) or bytecode.
+        /// Bytecode starts with FA FA followed by RIQS magic.
+        /// Source code is text that may contain Shift-JIS comments (bytes >= 0x80).
+        /// Detection: check for Squirrel keywords using Latin-1 decoding.
+        /// </summary>
+        static bool IsSourceCode(byte[] data)
+        {
+            if (data.Length < 8) return false;
+            // Bytecode check: RIQS at offset 2
+            if (data[2] == (byte)'R' && data[3] == (byte)'I' &&
+                data[4] == (byte)'Q' && data[5] == (byte)'S')
+                return false;
+            // Keyword check: use Latin-1 to handle Shift-JIS comments
+            string text = System.Text.Encoding.GetEncoding(28591).GetString(
+                data, 0, System.Math.Min(1024, data.Length));
+            if (text.Contains("function ") || text.Contains("local ") ||
+                text.Contains("if (") || text.Contains("set(") ||
+                text.Contains("reset()") || text.Contains("class ") ||
+                text.Contains("selectInit()") || text.Contains("title(") ||
+                text.Contains("msg(") || text.Contains("back()") ||
+                text.Contains("initVariable()") || text.Contains("Squirrel") ||
+                text.Contains("//"))
+                return true;
+            return false;
+        }
+
+        /// <summary>
+        /// Parse a .nut file. Handles both source code (text) and bytecode formats.
+        /// - Source code: copies directly (already readable Squirrel script)
+        /// - Bytecode: disassembles RIQS bytecode to human-readable instructions
+        /// </summary>
         public static void Parse(string filePath, string outPath)
         {
             BinaryReader reader = new BinaryReader(File.OpenRead(filePath));
             byte[] data = reader.ReadBytes((int)reader.BaseStream.Length);
+            reader.Close();
+
+            // Source code: just copy as-is (already readable)
+            if (IsSourceCode(data))
+            {
+                File.Copy(filePath, outPath, true);
+                return;
+            }
+
+            // Bytecode: disassemble
             int[] boundaries = FindAll(data, Encoding.ASCII.GetBytes("TRAP"));
+            if (boundaries.Length < 9)
+            {
+                // 无法解析的格式，至少需要9个TRAP边界
+                System.IO.File.WriteAllText(outPath,
+                    $"[!] Unable to parse: expected >=9 TRAP boundaries, found {boundaries.Length}");
+                return;
+            }
+
             List<string> strings = new List<string>();
             foreach (int index in FindAll(data,
                 new byte[] { 0x10, 0x00, 0x00, 0x08 },
                 boundaries[2] + 4, boundaries[3]))
             {
                 int length = ReadInt(data, index + 4);
-                strings.Add(Encoding.GetEncoding(932).GetString(data, index + 8, length));
+                if (index + 8 + length <= data.Length)
+                    strings.Add(Encoding.GetEncoding(932).GetString(data, index + 8, length));
             }
 
             List<string> instructions = new List<string>();
@@ -123,13 +174,20 @@ namespace NutParser
                 int oprand = ReadInt(data, index);
                 byte opcode = data[index + 4];
                 int arg3 = data[index + 7];
-                if (StringOpcodes.Contains(opcode))
+
+                string opName = OpcodeNames.ContainsKey(opcode)
+                    ? OpcodeNames[opcode].Substring(4)
+                    : $"UNKNOWN_0x{opcode:X2}";
+
+                if (StringOpcodes.Contains(opcode) &&
+                    oprand >= 0 && oprand < strings.Count &&
+                    arg3 >= 0 && arg3 < strings.Count)
                 {
-                    instructions.Add($"{OpcodeNames[opcode].Substring(4)} {strings[oprand]} {strings[arg3]}");
+                    instructions.Add($"{opName} {strings[oprand]} {strings[arg3]}");
                 }
                 else
                 {
-                    instructions.Add($"{OpcodeNames[opcode].Substring(4)} {oprand}");
+                    instructions.Add($"{opName} {oprand}");
                 }
             }
 
